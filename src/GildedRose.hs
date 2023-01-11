@@ -1,4 +1,5 @@
 module GildedRose where
+import Data.Ord (clamp)
 
 type GildedRose = [Item]
 
@@ -14,57 +15,22 @@ updateQuality = map updateQualityItem
   where
     updateQualityItem (Item name sellIn quality) =
       let
-        quality' =
-          if name /= "Aged Brie"
-             && name /= "Backstage passes to a TAFKAL80ETC concert"
-          then
-            if quality > 0
-            then
-              if name /= "Sulfuras, Hand of Ragnaros"
-              then quality - 1
-              else quality
-            else quality
-          else
-            if quality < 50
-            then
-              quality + 1 +
-                (if name == "Backstage passes to a TAFKAL80ETC concert"
-                 then
-                   if sellIn < 11
-                   then
-                     if quality < 49
-                     then
-                       1 + (if sellIn < 6
-                            then
-                              if quality < 48
-                              then 1
-                              else 0
-                            else 0)
-                     else 0
-                   else 0
-                 else 0)
-            else quality
-
+        qualityDiff = 
+          case name of 
+            "Sulfuras, Hand of Ragnaros" -> 0
+            "Aged Brie" -> 1
+            "Backstage passes to a TAFKAL80ETC concert" ->
+              if 11 <= sellIn then 1
+              else if 6 <= sellIn && sellIn <= 10 then 2
+              else if 1 <= sellIn && sellIn <= 5 then 3
+              else negate quality
+            "Conjured Mana Cake" -> normalItemDegrade sellIn * 2    
+            _ -> normalItemDegrade sellIn
         sellIn' =
-          if name /= "Sulfuras, Hand of Ragnaros"
-          then sellIn - 1
-          else sellIn
-      in
-        if sellIn' < 0
-        then
-          if name /= "Aged Brie"
-          then
-            if name /= "Backstage passes to a TAFKAL80ETC concert"
-            then
-              if quality' > 0
-              then
-                if name /= "Sulfuras, Hand of Ragnaros"
-                then (Item name sellIn' (quality' - 1))
-                else (Item name sellIn' quality')
-              else (Item name sellIn' quality')
-            else (Item name sellIn' (quality' - quality'))
-          else
-            if quality' < 50
-            then (Item name sellIn' (quality' + 1))
-            else (Item name sellIn' quality')
-        else (Item name sellIn' quality')
+          if name == "Sulfuras, Hand of Ragnaros" 
+            then sellIn 
+            else sellIn - 1
+      in Item name sellIn' (clamp (0, 50) (quality + qualityDiff))
+
+normalItemDegrade sellIn = 
+  if sellIn > 0 then (-1) else (-2)

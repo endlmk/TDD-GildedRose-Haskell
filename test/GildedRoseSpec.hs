@@ -76,4 +76,9 @@ spec =
            actual = updateQuality inventory
            expected = [Item "Conjured Mana Cake" 0 0]
        in actual `shouldBe` expected
+    it "Conjured degrade in 4 if sell by date has passed" $
+       let inventory = [Item "Conjured Mana Cake" 0 4]
+           actual = updateQuality inventory
+           expected = [Item "Conjured Mana Cake" (-1) 0]
+       in actual `shouldBe` expected
 
